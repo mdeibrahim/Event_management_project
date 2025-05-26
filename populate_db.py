@@ -33,6 +33,7 @@ def populate_db():
 
     # Create Events
     events = []
+
     for _ in range(200):
         # Generate a random date within the next 30 days
         event_date = fake.date_between(start_date='-30d', end_date='+30d')
