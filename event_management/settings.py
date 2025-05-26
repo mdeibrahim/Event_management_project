@@ -93,15 +93,18 @@ WSGI_APPLICATION = 'event_management.wsgi.application'
 #     }
 # }
 
+
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'event_management',
-        'USER': 'postgres',
-        'PASSWORD': '123',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
+   'default': {
+       'ENGINE': 'django.db.backends.postgresql',
+       'NAME': 'event_management',
+       'USER': 'postgres',
+       'PASSWORD': '123',
+       'HOST': 'localhost',
+       'PORT': '5432',
+   }
+
 }
 
 # Password validation
