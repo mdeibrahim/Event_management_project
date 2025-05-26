@@ -23,10 +23,13 @@
                         class="col-span-1 sm:col-span-2 lg:col-span-1 p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm">
                     <select class="p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm">
                         <option selected disabled>Filter by Category</option>
-                        <option>Technology</option>
-                        <option>Business</option>
-                        <option>Arts & Culture</option>
-                        <option>Health & Wellness</option>
+                            {% if categories %}
+                                {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endfor %}
+                            {% else %}
+                                <option disabled>No categories available</option>
+                            {% endif %}
                     </select>
                     <input type="date" placeholder="Start Date"
                         class="p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm">
