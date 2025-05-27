@@ -22,34 +22,35 @@ def transfer_data():
     # Update database URL to use Render database
     os.environ['DATABASE_URL'] = 'postgresql://task_management_db_dqbj_user:IeENJNhBlfW3jeJma5MqIlnhCM6A5yKX@dpg-d0qpjn95pdvs73aqoqsg-a.oregon-postgres.render.com/task_management_db_dqbj'
     
-    # Clear existing data in remote database
-    Participant.objects.all().delete()
-    Event.objects.all().delete()
-    Category.objects.all().delete()
-
-    # Transfer categories
+    # Create a mapping of existing categories
+    category_map = {}
     for category in categories:
-        Category.objects.create(
+        remote_category, created = Category.objects.get_or_create(
             name=category.name
         )
+        category_map[category.id] = remote_category
     print("Categories transferred")
 
-    # Transfer events
+    # Create a mapping of existing events
+    event_map = {}
     for event in events:
-        Event.objects.create(
+        remote_event, created = Event.objects.get_or_create(
             name=event.name,
-            category=Category.objects.get(name=event.category.name),
-            date=event.date,
-            time=event.time,
-            location=event.location,
-            description=event.description
+            defaults={
+                'category': category_map[event.category.id],
+                'date': event.date,
+                'time': event.time,
+                'location': event.location,
+                'description': event.description
+            }
         )
+        event_map[event.id] = remote_event
     print("Events transferred")
 
     # Transfer participants
     for participant in participants:
-        Participant.objects.create(
-            event=Event.objects.get(name=participant.event.name),
+        Participant.objects.get_or_create(
+            event=event_map[participant.event.id],
             name=participant.name,
             email=participant.email
         )

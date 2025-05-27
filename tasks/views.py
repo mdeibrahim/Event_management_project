@@ -74,6 +74,8 @@ def add_new(request):
         location = request.POST.get('location')
         description = request.POST.get('description')
 
+        print(f"Form data received: name={name}, category_id={category_id}, date={date}, time={time}, location={location}")
+
         try:
             # Check if a category ID was provided
             if not category_id:
@@ -91,7 +93,9 @@ def add_new(request):
             # Retrieve the Category object
             try:
                 category_instance = Category.objects.get(pk=category_id)
+                print(f"Found category: {category_instance.name}")
             except Category.DoesNotExist:
+                print(f"Category with ID {category_id} not found")
                 messages.error(request, 'Selected category does not exist.')
                 return render(request, 'menu/add_new.html', {
                     'categories': categories,
@@ -113,6 +117,7 @@ def add_new(request):
                 description=description
             )
             new_event.save()
+            print(f"Created new event: {new_event.name}")
 
             # Process participants
             participant_count = 0
@@ -124,17 +129,19 @@ def add_new(request):
                     break
                 
                 # Create participant
-                Participant.objects.create(
+                participant = Participant.objects.create(
                     event=new_event,
                     name=participant_name,
                     email=participant_email
                 )
+                print(f"Added participant: {participant.name} ({participant.email})")
                 participant_count += 1
 
             messages.success(request, 'Event and participants created successfully!')
             return redirect('dashboard')
 
         except Exception as e:
+            print(f"Error creating event: {str(e)}")
             messages.error(request, f'Error creating event: {str(e)}')
             return render(request, 'menu/add_new.html', {
                 'categories': categories,
