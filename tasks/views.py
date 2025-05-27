@@ -8,7 +8,7 @@ def dashboard(request):
     type = request.GET.get('type', 'today')
     
     # Get all events for the dashboard
-    events = Event.objects.all().order_by('-date', '-time')
+    events = Event.objects.all().order_by('date', 'time')
     total_events = events.count()
     
     # Get today's date for filtering
