@@ -1,7 +1,7 @@
 
 from django.contrib import admin
 from django.urls import path, include
-from tasks.views import dashboard, event, add_new
+from tasks.views import dashboard, add_new,event
 from django.conf import settings
 
 urlpatterns = [
