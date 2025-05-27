@@ -102,7 +102,8 @@
                         class="col-span-12 sm:col-span-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                         <p class="text-sm sm:text-base">{{ event.location }}</p>
                         <div class="flex space-x-2">
-                            <a href="{% url 'update_event' type event.id %}"> <button
+                            <a href="{% url 'update_event' type event.id %}"> 
+                                <button
                                     class="p-2 bg-green-300 hover:bg-green-400 rounded-md transition-colors duration-200">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
                                         fill="currentColor">
@@ -112,7 +113,8 @@
                                             d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"
                                             clip-rule="evenodd" />
                                     </svg>
-                                </button></a>
+                                </button>
+                            </a>
 
                             <a href="{% url 'delete_event' type event.id %}">
                                 <button

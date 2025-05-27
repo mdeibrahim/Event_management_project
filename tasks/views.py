@@ -6,6 +6,7 @@ from .models import Event, Category, Participant
 import re # Import regex for dynamic participant fields 
 from django.contrib import messages 
 from .forms import EventForm
+from django.db.models import Q
 
 def dashboard(request):
     
@@ -251,5 +252,32 @@ def delete_event(request, event_type, event_id):
 
 def event(request):
     # Get all categories for the dropdown
-    # categories = Category.objects.all().order_by('name')
-    return render(request, 'menu/event.html')
+    categories = Category.objects.all().order_by('name')
+    
+    # Get search parameters
+    search_query = request.GET.get('search', '')
+    category_id = request.GET.get('category', '')
+    
+    # Start with all events
+    events = Event.objects.all()
+    
+    # Apply search filter if search query exists
+    if search_query:
+        events = events.filter(
+            Q(name__icontains=search_query) |
+            Q(location__icontains=search_query)
+        )
+    
+    # Apply category filter if category is selected
+    if category_id:
+        events = events.filter(category_id=category_id)
+    
+    # Order events by date and time
+    events = events.order_by('date', 'time')
+    
+    return render(request, 'menu/event.html', {
+        'categories': categories,
+        'events': events,
+        'search_query': search_query,
+        'category_id': category_id
+    })
