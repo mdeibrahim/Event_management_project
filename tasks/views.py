@@ -1,10 +1,11 @@
 # views.py
 
-from django.shortcuts import render, redirect
-from django.utils import timezone
-from .models import Event, Category, Participant
-import re # Import regex for dynamic participant fields
-from django.contrib import messages
+from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone 
+from .models import Event, Category, Participant 
+import re # Import regex for dynamic participant fields 
+from django.contrib import messages 
+from .forms import EventForm
 
 def dashboard(request):
     
@@ -56,11 +57,11 @@ def dashboard(request):
         'past_count': past_count,
         'events': events_to_display,
         'title': title,
+        'type': event_type
     }
     return render(request, 'menu/dashboard.html', context)
 
 def add_new(request):
-    event = Event.objects.all() 
     categories = Category.objects.all()
 
     if request.method == 'POST':
@@ -77,7 +78,6 @@ def add_new(request):
             if not category_id:
                 messages.error(request, 'Category is required.')
                 return render(request, 'menu/add_new.html', {
-                    'event': event,
                     'categories': categories,
                     'name': name,
                     'date': date,
@@ -93,7 +93,6 @@ def add_new(request):
             except Category.DoesNotExist:
                 messages.error(request, 'Selected category does not exist.')
                 return render(request, 'menu/add_new.html', {
-                    'event': event,
                     'categories': categories,
                     'name': name,
                     'date': date,
@@ -137,7 +136,6 @@ def add_new(request):
         except Exception as e:
             messages.error(request, f'Error creating event: {str(e)}')
             return render(request, 'menu/add_new.html', {
-                'event': event,
                 'categories': categories,
                 'name': name,
                 'date': date,
@@ -147,7 +145,108 @@ def add_new(request):
                 'selected_category_id': category_id
             })
 
-    return render(request, 'menu/add_new.html', {'event': event, 'categories': categories})
+    return render(request, 'menu/add_new.html', {'categories': categories})
+
+# def add_participant(request):
+#     return render(request, 'menu/add_participant.html')
+
+
+
+def update_event(request, event_type, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    categories = Category.objects.all()
+    participants = event.participants.all()
+
+    if request.method == 'POST':
+        # Get form data
+        name = request.POST.get('name')
+        category_id = request.POST.get('category')
+        date = request.POST.get('date')
+        time = request.POST.get('time')
+        location = request.POST.get('location')
+        description = request.POST.get('description')
+
+        try:
+            # Check if a category ID was provided
+            if not category_id:
+                messages.error(request, 'Category is required.')
+                return render(request, 'menu/add_new.html', {
+                    'categories': categories,
+                    'event': event,
+                    'participants': participants,
+                    'event_type': event_type,
+                    'is_update': True
+                })
+
+            # Retrieve the Category object
+            try:
+                category_instance = Category.objects.get(pk=category_id)
+            except Category.DoesNotExist:
+                messages.error(request, 'Selected category does not exist.')
+                return render(request, 'menu/add_new.html', {
+                    'categories': categories,
+                    'event': event,
+                    'participants': participants,
+                    'event_type': event_type,
+                    'is_update': True
+                })
+
+            # Update the event
+            event.name = name
+            event.category = category_instance
+            event.date = date
+            event.time = time
+            event.location = location
+            event.description = description
+            event.save()
+
+            # Delete existing participants
+            event.participants.all().delete()
+
+            # Process new participants
+            participant_count = 0
+            while True:
+                participant_name = request.POST.get(f'participant_name_{participant_count}')
+                participant_email = request.POST.get(f'participant_email_{participant_count}')
+                
+                if not participant_name or not participant_email:
+                    break
+                
+                # Create participant
+                Participant.objects.create(
+                    event=event,
+                    name=participant_name,
+                    email=participant_email
+                )
+                participant_count += 1
+
+            messages.success(request, 'Event updated successfully!')
+            return redirect(f'dashboard?type={event_type}')
+
+        except Exception as e:
+            messages.error(request, f'Error updating event: {str(e)}')
+            return render(request, 'menu/add_new.html', {
+                'categories': categories,
+                'event': event,
+                'participants': participants,
+                'event_type': event_type,
+                'is_update': True
+            })
+
+    return render(request, 'menu/add_new.html', {
+        'categories': categories,
+        'event': event,
+        'participants': participants,
+        'event_type': event_type,
+        'is_update': True
+    })
+
+
+def delete_event(request, event_type, event_id):
+    event = Event.objects.get(id=event_id)
+    event.delete()
+    messages.success(request, 'Event deleted successfully!')
+    return redirect(f'/?type={event_type}') # Corrected line
 
 
 def event(request):
