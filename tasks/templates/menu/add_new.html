@@ -1,34 +1,44 @@
 {% extends './base.html' %}
 
-{% block title %}Add New Event{% endblock %}
+{% block title %}{% if is_update %}Update Event{% else %}Add New Event{% endif %}{% endblock %}
 
 {% block content %}
 <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
     <div class="mb-8 p-4 md:p-0">
-        <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-6">Add New Event</h2>
+        <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-6">{% if is_update %}Update Event{% else %}Add New Event{% endif %}</h2>
 
         <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6">
-            <form method="POST" action="{% url 'add_new' %}">
+            <form method="POST" action="{% if is_update %}{% url 'update_event' event_type event.id %}{% else %}{% url 'add_new' %}{% endif %}">
                 {% csrf_token %}
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                     <div>
                         <label class="block text-gray-700 text-sm font-medium mb-2" for="name">Event Name</label>
                         <input type="text" id="name" name="name" required
+                            value="{{ event.name|default:'' }}"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
                     </div>
                     <div>
                         <label class="block text-gray-700 text-sm font-medium mb-2" for="category">Category</label>
-                        <input type="text" id="category" name="category"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                        <select id="category" name="category" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                            <option value="">Select a category</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}" {% if event.category.id == category.id %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
                     </div>
                     <div>
                         <label class="block text-gray-700 text-sm font-medium mb-2" for="date">Date</label>
                         <input type="date" id="date" name="date" required
+                            value="{{ event.date|date:'Y-m-d'|default:'' }}"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
                     </div>
                     <div>
                         <label class="block text-gray-700 text-sm font-medium mb-2" for="time">Time</label>
                         <input type="time" id="time" name="time" required
+                            value="{{ event.time|time:'H:i'|default:'' }}"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
                     </div>
                 </div>
@@ -36,22 +46,40 @@
                 <div class="mb-6">
                     <label class="block text-gray-700 text-sm font-medium mb-2" for="location">Location</label>
                     <input type="text" id="location" name="location" required
+                        value="{{ event.location|default:'' }}"
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
                 </div>
 
                 <div class="mb-6">
                     <label class="block text-gray-700 text-sm font-medium mb-2" for="description">Description</label>
                     <textarea id="description" name="description" required
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"></textarea>
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">{{ event.description|default:'' }}</textarea>
                 </div>
 
                 <div class="mb-6">
                     <div class="mb-4">
                         <h3 class="text-gray-700 text-sm font-medium mb-4">Participants</h3>
                         <div id="participants-container">
-                            <!-- Participant fields will be added here -->
+                            {% if participants %}
+                                {% for participant in participants %}
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <input type="text" name="participant_name_{{ forloop.counter0 }}" 
+                                            value="{{ participant.name }}"
+                                            placeholder="Participant Name"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                                    </div>
+                                    <div>
+                                        <input type="email" name="participant_email_{{ forloop.counter0 }}" 
+                                            value="{{ participant.email }}"
+                                            placeholder="Participant Email"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% endif %}
                         </div>
-                        <button type="button" onclick="addParticipantField()" 
+                        <button type="button" onclick="addParticipantField()"
                             class="mt-4 px-3 py-2 rounded-md text-sm font-medium text-indigo-900 bg-indigo-200 transition-colors duration-200 hover:bg-indigo-400">
                             Add Participant
                         </button>
@@ -59,10 +87,12 @@
                 </div>
 
                 <div class="flex flex-col sm:flex-row justify-end gap-4">
-                    <a href="{% url 'add_new' %}" 
+                    <a href="{% url 'dashboard' %}?type={{ event_type }}"
                         class="w-full sm:w-auto px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors duration-200 text-center text-sm">Cancel</a>
-                    <button type="submit" name="add_new"
-                        class="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-200 text-sm">Save Event</button>
+                    <button type="submit"
+                        class="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-200 text-sm">
+                        {% if is_update %}Update Event{% else %}Save Event{% endif %}
+                    </button>
                 </div>
             </form>
         </div>
@@ -70,7 +100,7 @@
 </main>
 
 <script>
-    let participantCount = 0;
+    let participantCount = "{{ participants|length|default:0 }}";
 
     function addParticipantField() {
         const container = document.getElementById('participants-container');
