@@ -13,8 +13,8 @@ def dashboard(request):
     today = timezone.localdate()
     now = timezone.localtime().time()
 
-    # Get all events from the database
-    all_events = Event.objects.all()
+    # Get all events from the database with related data
+    all_events = Event.objects.select_related('category').prefetch_related('participants')
 
     # Calculate dashboard statistics
     total_events = all_events.count()
@@ -154,7 +154,7 @@ def add_new(request):
 
 
 def update_event(request, event_type, event_id):
-    event = get_object_or_404(Event, id=event_id)
+    event = get_object_or_404(Event.objects.select_related('category').prefetch_related('participants'), id=event_id)
     categories = Category.objects.all()
     participants = event.participants.all()
 
@@ -201,11 +201,11 @@ def update_event(request, event_type, event_id):
             event.description = description
             event.save()
 
-            # Delete existing participants
+            # Delete existing participants and create new ones in bulk
             event.participants.all().delete()
-
-            # Process new participants
+            new_participants = []
             participant_count = 0
+            
             while True:
                 participant_name = request.POST.get(f'participant_name_{participant_count}')
                 participant_email = request.POST.get(f'participant_email_{participant_count}')
@@ -213,16 +213,18 @@ def update_event(request, event_type, event_id):
                 if not participant_name or not participant_email:
                     break
                 
-                # Create participant
-                Participant.objects.create(
+                new_participants.append(Participant(
                     event=event,
                     name=participant_name,
                     email=participant_email
-                )
+                ))
                 participant_count += 1
+            
+            if new_participants:
+                Participant.objects.bulk_create(new_participants)
 
             messages.success(request, 'Event updated successfully!')
-            return redirect(f'dashboard?type={event_type}')
+            return redirect(f'/?type={event_type}')
 
         except Exception as e:
             messages.error(request, f'Error updating event: {str(e)}')
@@ -258,8 +260,8 @@ def event(request):
     search_query = request.GET.get('search', '')
     category_id = request.GET.get('category', '')
     
-    # Start with all events
-    events = Event.objects.all()
+    # Start with all events and include related data
+    events = Event.objects.select_related('category').prefetch_related('participants')
     
     # Apply search filter if search query exists
     if search_query:
