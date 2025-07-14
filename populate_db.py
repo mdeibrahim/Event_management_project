@@ -15,28 +15,20 @@ def populate_db():
     # Initialize Faker
     fake = Faker()
 
-    # Create Categories
-    categories = [
-        Category.objects.create(
-            name=name,
-            description=fake.paragraph()
-        ) for name in ['Work', 'Personal', 'Social', 'Education', 'Health']
-    ]
-    print(f"Created {len(categories)} categories.")
+    # Create Categories (only allowed choices)
+    allowed_categories = ['social', 'workshop', 'seminar', 'others']
+    categories = []
+    for name in allowed_categories:
+        category, _ = Category.objects.get_or_create(name=name)
+        categories.append(category)
+    print(f"Ensured {len(categories)} categories.")
 
-    # Create Participants
-    participants = [Participant.objects.create(
-        name=fake.name(),
-        email=fake.email()
-    ) for _ in range(15)]
-    print(f"Created {len(participants)} participants.")
-
-    # Create Events
+    # Create Events and Participants
     events = []
 
-    for _ in range(200):
+    for _ in range(50):  # Use a smaller number for testing, increase as needed
         # Generate a random date within the next 30 days
-        event_date = fake.date_between(start_date='-30d', end_date='+30d')
+        event_date = fake.date_between(start_date='-10d', end_date='+30d')
         # Generate a random time
         event_time = fake.time()
         # Generate a random location
@@ -50,13 +42,17 @@ def populate_db():
             location=location,
             category=random.choice(categories)
         )
-        
-        # Add random participants to the event
-        event_participants = random.sample(participants, random.randint(1, 5))
-        event.participants.set(event_participants)
         events.append(event)
+
+        # Add random participants to the event
+        for _ in range(random.randint(1, 5)):
+            Participant.objects.create(
+                event=event,
+                name=fake.name(),
+                email=fake.email()
+            )
     
-    print(f"Created {len(events)} events.")
+    print(f"Created {len(events)} events with participants.")
     print("Database populated successfully!")
 
 if __name__ == '__main__':

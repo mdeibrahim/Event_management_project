@@ -63,6 +63,11 @@ def dashboard(request):
     return render(request, 'menu/dashboard.html', context)
 
 def add_new(request):
+    # Ensure default categories exist
+    default_categories = ['social', 'workshop', 'seminar', 'others']
+    for key in default_categories:
+        Category.objects.get_or_create(name=key)
+
     categories = Category.objects.all()
 
     if request.method == 'POST':
